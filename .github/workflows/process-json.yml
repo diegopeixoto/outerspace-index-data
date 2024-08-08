@@ -39,18 +39,23 @@ jobs:
 
       - name: Clone the ${{ vars.HANDLER_REPOSITORY }} repository
         run: |
+          OWNER=$(echo "${{ github.repository }}" | cut -d'/' -f1)
+          echo "GITHUB_REPOSITORY_OWNER=$OWNER" >> $GITHUB_ENV
           git clone https://github.com/${{env.GITHUB_REPOSITORY_OWNER}}/${{ vars.HANDLER_REPOSITORY }}.git
           cd ${{ vars.HANDLER_REPOSITORY }}
           npm ci
           npm run build
+
       - name: Perform a dry run
         run: |
           cd ${{ vars.HANDLER_REPOSITORY }}
           node dist/index.js ${{ env.GITHUB_ACTION_PATH }}/${{ env.json_file_name }} --dry-run
+
       - name: Run the actual task
         if: ${{ success() }}
         run: |
           cd ${{ vars.HANDLER_REPOSITORY }}
           node dist/index.js ${{ env.GITHUB_ACTION_PATH }}/${{ env.json_file_name }}
+
       - name: Clean up
         run: rm -rf ${{ vars.HANDLER_REPOSITORY }}
