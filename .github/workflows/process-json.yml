@@ -14,7 +14,6 @@ jobs:
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-      HANDLER_REPOSITORY: ${{ secrets.HANDLER_REPOSITORY }}
 
     steps:
       - name: Check out the repository
@@ -38,21 +37,21 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Clone the Handler repository
+      - name: Clone the ${{ vars.HANDLER_REPOSITORY }} repository
         run: |
-          git clone https://github.com/${{ env.HANDLER_REPOSITORY }}.git
-          cp ./${{ env.json_file_name }} $(basename ${{ env.HANDLER_REPOSITORY }})
-          cd $(basename ${{ env.HANDLER_REPOSITORY }})
+          git clone https://github.com/${{ vars.HANDLER_REPOSITORY }}.git
+          cp ./${{ env.json_file_name }} ${{ vars.HANDLER_REPOSITORY }}
+          cd ${{ vars.HANDLER_REPOSITORY }}
           npm ci
           npm run build
       - name: Perform a dry run
         run: |
-          cd $(basename ${{ env.HANDLER_REPOSITORY }})
+          cd ${{ vars.HANDLER_REPOSITORY }}
           node dist/index.js ./${{ env.json_file_name }} --dry-run
       - name: Run the actual task
         if: ${{ success() }}
         run: |
-          cd $(basename ${{ env.HANDLER_REPOSITORY }})
+          cd ${{ vars.HANDLER_REPOSITORY }}
           node dist/index.js ./${{ env.json_file_name }}
       - name: Clean up
-        run: rm -rf $(basename ${{ env.HANDLER_REPOSITORY }})
+        run: rm -rf ${{ vars.HANDLER_REPOSITORY }}
