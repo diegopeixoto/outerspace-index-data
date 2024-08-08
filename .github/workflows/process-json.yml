@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**.json'
 
 jobs:
   process-json:
@@ -12,6 +14,7 @@ jobs:
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      HANDLER_REPOSITORY: ${{ secrets.HANDLER_REPOSITORY }}
 
     steps:
       - name: Check out the repository
@@ -35,24 +38,21 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Clone the outerspace-index-handler repository
+      - name: Clone the Handler repository
         run: |
-          git clone https://github.com/diegopeixoto/outerspace-index-handler.git
-          cp ./${{ env.json_file_name }} outerspace-index-handler
-          cd outerspace-index-handler
+          git clone https://github.com/${{ env.HANDLER_REPOSITORY }}.git
+          cp ./${{ env.json_file_name }} $(basename ${{ env.HANDLER_REPOSITORY }})
+          cd $(basename ${{ env.HANDLER_REPOSITORY }})
           npm ci
           npm run build
-
       - name: Perform a dry run
         run: |
-          cd outerspace-index-handler
+          cd $(basename ${{ env.HANDLER_REPOSITORY }})
           node dist/index.js ./${{ env.json_file_name }} --dry-run
-
       - name: Run the actual task
         if: ${{ success() }}
         run: |
-          cd outerspace-index-handler
+          cd $(basename ${{ env.HANDLER_REPOSITORY }})
           node dist/index.js ./${{ env.json_file_name }}
-
       - name: Clean up
-        run: rm -rf outerspace-index-handler
+        run: rm -rf $(basename ${{ env.HANDLER_REPOSITORY }})
