@@ -1,0 +1,58 @@
+name: Process JSON Commit
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  process-json:
+    runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get the JSON file name from the commit
+        id: get-json-file
+        run: |
+          json_file=$(git diff-tree --no-commit-id --name-only -r HEAD | grep '.json$' || true)
+          if [ -z "$json_file" ]; then
+            echo "Nenhum arquivo JSON encontrado no commit. Abortando."
+            exit 0
+          fi
+          echo "json_file_name=$json_file" >> $GITHUB_ENV
+          echo "Arquivo JSON encontrado: $json_file"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Clone the outerspace-index-handler repository
+        run: |
+          git clone https://github.com/diegopeixoto/outerspace-index-handler.git
+          cp ./${{ env.json_file_name }} outerspace-index-handler
+          cd outerspace-index-handler
+          npm ci
+          npm run build
+
+      - name: Perform a dry run
+        run: |
+          cd outerspace-index-handler
+          node dist/index.js ./${{ env.json_file_name }} --dry-run
+
+      - name: Run the actual task
+        if: ${{ success() }}
+        run: |
+          cd outerspace-index-handler
+          node dist/index.js ./${{ env.json_file_name }}
+
+      - name: Clean up
+        run: rm -rf outerspace-index-handler
