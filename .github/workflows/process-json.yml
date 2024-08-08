@@ -48,13 +48,13 @@ jobs:
       - name: Perform a dry run
         run: |
           cd ${{ vars.HANDLER_REPOSITORY }}
-          node dist/index.js ${{ env.GITHUB_ACTION_PATH }}/${{ env.json_file_name }} --dry-run
+          node dist/index.js ${{ github.workspace }}/${{ env.json_file_name }} --dry-run
 
       - name: Run the actual task
         if: ${{ success() }}
         run: |
           cd ${{ vars.HANDLER_REPOSITORY }}
-          node dist/index.js ${{ env.GITHUB_ACTION_PATH }}/${{ env.json_file_name }}
+          node dist/index.js ${{ github.workspace }}/${{ env.json_file_name }}
 
       - name: Clean up
         run: rm -rf ${{ vars.HANDLER_REPOSITORY }}
