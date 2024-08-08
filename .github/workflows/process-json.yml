@@ -25,7 +25,7 @@ jobs:
           json_file=$(git diff-tree --no-commit-id --name-only -r HEAD | grep '.json$' || true)
           if [ -z "$json_file" ]; then
             echo "Nenhum arquivo JSON encontrado no commit. Abortando."
-            exit 0
+            exit 1
           fi
           echo "json_file_name=$json_file" >> $GITHUB_ENV
           echo "Arquivo JSON encontrado: $json_file"
